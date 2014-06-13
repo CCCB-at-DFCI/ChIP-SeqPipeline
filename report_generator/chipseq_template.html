@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>ChIP-Seq Analysis Results</title>
+    
+    <!-- jQuery-->
+    <!--<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>-->
+    <script src="lib/jquery.min.js"></script>
+    <!-- Bootstrap -->
+    <link href="lib/bootstrap.min.edit.css" rel="stylesheet">
+    
+    <!-- Custom css-->	
+    <link href="lib/chipseq_report.css" rel="stylesheet">
+
+    <!--custom javascript-->
+    <script src="lib/chipseq_report_custom.js"></script>
+
+	</head>
+	<body>
+		<div class="simple_header">
+			<div>
+				<span class="left_header">ChIP-Seq Analysis Report</span>
+			</div>
+			<div>
+				<span class="right_header">
+					<img id="cccb_logo" src="lib/CCCB_Logo.png"></img>
+				</span>
+			</div>
+		</div>
+		
+		<div class="spacer-div">
+		</div>
+
+		<div class="container-fluid">
+			<div class="row">
+				<ul id="tabPanel" class="nav nav-tabs">
+					<li>
+						<a data-toggle="tab" href="#quality_report">Quality Report</a>
+					</li>
+					<li>
+						<a data-toggle="tab" href="#peak_analysis">Peak Analysis</a>
+					</li>
+					<li>
+						<a data-toggle="tab" href="#motif_analysis">Motif Analysis</a>
+					</li>
+					<li>
+						<a data-toggle="tab" href="#ontology">Genome Ontology Analysis</a>
+					</li>
+					<li>
+						<a data-toggle="tab" href="#bed">BED Files</a>
+					</li>
+					<li>
+						<a data-toggle="tab" href="#differential_peaks">Differential Peak Analysis</a>
+					</li>
+					<li>
+						<a data-toggle="tab" href="#help">Help</a>
+					</li>
+				</ul>
+
+				<div class="tab-content">
+					<div class="tab-pane fade" id="quality_report">
+						<div class="container">
+							<h2>Click on a sample to view the quality report</h2>
+						</div>
+						<div id="quality_report_section" class="container">
+							<div class="row">
+								<!-- #QC_REPORT#
+								<div class="panel panel-primary">
+		  							<div id="#SAMPLE_ID#_qc_panel" class="panel-heading keep-pointer accordion-panel">
+		    								<h3 class="panel-title">
+											#SAMPLE_ID#
+										</h3>
+		  							</div>
+									<div id="#SAMPLE_ID#_qc_view" class="panel-body content-panel">
+										<h3>
+											Result metadata
+										</h3>
+										#QC_METADATA_TABLE#
+
+										#QC_PLOT_SECTION#
+										<div class="full-width-container">
+											<div class="left-side">
+												<img src="#IMG_SRC#" alt="Image not found." style="width:99%;">
+												</img>
+											</div>
+											<div class="right-wrapper">
+												<div class="right-side">
+													<div class="vertical-align-parent">
+														<div class="vertical-align-child">
+															From file: <a href="#IMG_DATAFILE#" target="_blank">#IMG_DATAFILE_BASENAME#</a>
+														</div>
+													</div>
+												</div>
+											</div>
+											<div class="clear">&nbsp;</div>
+										</div>
+										#QC_PLOT_SECTION#
+									</div>
+								</div>
+								#QC_REPORT#
+								-->
+							</div>
+						</div>
+					</div>
+					<div class="tab-pane fade" id="peak_analysis">
+						<div class="container">
+							<h2>Click on a link to view the peak analysis file in another tab</h2>
+						</div>
+						<div id="peak_analysis_section" class="container">
+							<div class="row">
+								<!-- #PEAK_SECTION#
+								<div class="panel panel-primary">
+									<div id="#SAMPLE_ID#_peaks_panel" class="panel-heading keep-pointer">
+										<h3 class="panel-title">
+											#SAMPLE_ID#
+										</h3>
+									</div>
+									<div id="#SAMPLE_ID#_peaks_view" class="panel-body">
+										<ul>
+											#PEAK_FILE_LINK_SECTION#
+											<li><a href="#PEAK_FILE_LINK#" target="_blank">#PEAK_FILE_BASENAME#</a></li>
+											#PEAK_FILE_LINK_SECTION#
+										</ul>
+									</div>
+								</div>
+								#PEAK_SECTION#
+								-->
+							</div>
+						</div>
+					</div>
+
+                                        <div class="tab-pane fade" id="motif_analysis">
+                                                <div class="container">
+                                                        <h2>Click on a sample to view the motif analysis HTML report in another tab</h2>
+                                                </div>
+                                                <div id="motif" class="container">
+                                                        <div class="row">
+                                                                <!-- #MOTIF_SECTION#
+                                                                <div class="panel panel-primary">
+                                                                        <div id="#SAMPLE_ID#_motif_panel" class="panel-heading keep-pointer">
+                                                                                <h3 class="panel-title">
+                                                                                        #SAMPLE_ID#
+                                                                                </h3>
+                                                                        </div>
+                                                                        <div id="#SAMPLE_ID#_motif_view" class="panel-body">
+                                                                                <ul>
+                                                                                    	#MOTIF_FILE_LINK_SECTION#
+                                                                                        <li><a href="#MOTIF_FILE_LINK#" target="_blank">#MOTIF_FILE_BASENAME#</a></li>
+                                                                                        #MOTIF_FILE_LINK_SECTION#
+                                                                                </ul>
+                                                                        </div>
+                                                                </div>
+                                                                #MOTIF_SECTION#
+                                                                -->
+                                                        </div>
+                                                </div>
+                                        </div>
+
+                                        <div class="tab-pane fade" id="ontology">
+                                                <div class="container">
+                                                        <h2>Click on a sample to view the GO analysis HTML report in another tab</h2>
+                                                </div>
+                                                <div class="container">
+                                                        <div class="row">
+                                                                <!-- #GO_SECTION#
+                                                                <div class="panel panel-primary">
+                                                                        <div id="#SAMPLE_ID#_go_panel" class="panel-heading keep-pointer">
+                                                                                <h3 class="panel-title">
+                                                                                        #SAMPLE_ID#
+                                                                                </h3>
+                                                                        </div>
+                                                                        <div id="#SAMPLE_ID#_go_view" class="panel-body">
+                                                                                <ul>
+                                                                                    	#GO_FILE_LINK_SECTION#
+                                                                                        <li>#GO_FILE_DESCRIPTION#<a href="#GO_FILE_LINK#" target="_blank">#GO_FILE_BASENAME#</a></li>
+                                                                                        #GO_FILE_LINK_SECTION#
+                                                                                </ul>
+                                                                        </div>
+                                                                </div>
+                                                                #GO_SECTION#
+                                                                -->
+                                                        </div>
+                                                </div>
+                                        </div>
+
+
+					<div class="tab-pane fade" id="bed">
+						<div class="simple_div">
+							<h2>UCSC genome browser BED files:</h2>
+							<h3>(compressed files to used with the UCSC genome browser)</h3>
+							<!--#BED_FILE_SECTION#
+							<div>
+								<h3><a href="#BED_FILE_LINK#" target="_blank">#BED_FILE_BASENAME#</a></h3>
+							</div>		
+							#BED_FILE_SECTION#
+							-->
+						</div>
+					</div>
+
+					<div class="tab-pane fade" id="differential_peaks">
+						<div class="simple_div">
+							<h2>Differential peak analysis performed by HOMER:</h2>
+						</div>
+					</div>
+					<div class="tab-pane fade" id="help">
+						<div class="simple_div">
+							<h2>Explanation of this output report</h2>
+							<!-- #OUTPUT_EXPLANATION#
+
+							#OUTPUT_EXPLANATION# 
+							-->
+						</div>
+					</div>
+				</div> <!-- close tab content-->
+			</div> <!--close row-->
+		</div><!-- close fluid container-->
+
+
+    <!-- Include all compiled plugins (below), or include individual files as needed -->
+		<script src="lib/bootstrap.min.js"></script>
+	</body>
+</html>
+
+

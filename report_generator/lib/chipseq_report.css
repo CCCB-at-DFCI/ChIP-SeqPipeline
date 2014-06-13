@@ -1,0 +1,139 @@
+
+.main {
+  padding: 20px;
+}
+@media (min-width: 768px) {
+  .main {
+    padding-right: 40px;
+    padding-left: 40px;
+  }
+}
+
+.content-panel{
+	display:none;
+}
+
+.qc_report_iframe{
+	width: 100%;
+	height: 500px;
+}
+
+.simple_div{
+	padding: 20px;
+}
+
+.simple_header{
+	color: #c5c5c5;			
+	background-color: #0F0D0E;	
+	border-style:dashed;
+	border-width:0px;
+	height: 100px;			
+	width: 100%;				
+	position:relative;
+}
+
+.left_header{
+	vertical-align: middle;
+	float:left;		
+	margin-left: 25px;	
+        line-height: 100px;
+	font-size:25px;
+}
+
+.right_header{
+	vertical-align: middle;
+	float:right;
+	margin-right: 25px;
+        line-height: 100px;
+}
+
+#cccb_logo{
+	height:80px;
+}
+
+a:focus{
+	outline:none;
+}
+
+.keep-pointer{
+	cursor:pointer;
+}
+
+.spacer-div{
+	padding:10px;
+}
+
+.top-and-bottom-padding{
+	padding-top:10px;
+	padding-bottom:10px;
+}
+
+.full-width-container{
+	width:100%;
+	position:relative;
+}
+
+.left-side{
+	width:60%;
+	float:left;
+	margin-right:2%;
+	padding:10px;
+}
+
+.right-side{
+	height:100%;
+	position:absolute;
+	padding:20px;
+}
+
+.right-wrapper{
+	width:38%;
+	float:left;
+}
+
+.vertical-align-parent{
+	display: table;
+	height:100%;
+	width:100%;
+}
+
+.vertical-align-child{
+	display: table-cell;
+	vertical-align:middle;
+}
+
+.clear{
+	clear: both;
+	height:0px;
+}
+
+.left-side-menu{
+	width:20%;
+	float:left;
+	margin-right:2%;
+	padding:10px;
+}
+
+.right-wrapper-menu{
+	width:78%;
+	float:left;
+}
+
+.right-side-menu{
+	height:100%;
+	position:absolute;
+	padding:20px;
+	width:78%;
+}
+
+.left-div{
+	width:20%;
+	float:left;
+	margin-right:2%;
+	padding:10px;
+}
+
+.right-div{
+	width:78%;
+	float:left;
+}

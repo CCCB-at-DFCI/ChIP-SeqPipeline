@@ -1,0 +1,158 @@
+#Defining the location of the pipeline and some related scripts
+
+#the 'home' directory for the ChIP-seq pipeline:
+PIPELINE_HOME=/cccbstore-rc/projects/cccb/pipelines/ChIP_Seq_pipeline
+
+#a directory containing the template files+libraries for creating the output report. will be filled-in by scripts at end of pipeline
+REPORT_TEMPLATE_DIR=$PIPELINE_HOME/report_generator
+REPORT_TEMPLATE_LIBRARIES=$REPORT_TEMPLATE_DIR/lib/
+REPORT_TEMPLATE_HTML=$REPORT_TEMPLATE_DIR/chipseq_template.html
+
+# the location of the template alignment scripts:
+ALIGN_SCRIPT_TEMPLATE=$PIPELINE_HOME/BWA_aln_template.sh
+
+#some helper scripts:
+PREPARE_ALIGN_SCRIPT=$PIPELINE_HOME/prepare_align_script.py
+CHECK_BAM_SCRIPT=$PIPELINE_HOME/check_for_bam.py
+CREATE_REPORT_SCRIPT=$REPORT_TEMPLATE_DIR/create_report.py
+
+# R scripts for plotting QC:
+PLOT_TAG_AUTOCORRELATION_SCRIPT=$PIPELINE_HOME"/plot_tagAutocorrelation.R"
+PLOT_TAG_COUNT_DIST_SCRIPT=$PIPELINE_HOME"/plot_tagCountDistribution.R"
+PLOT_TAG_FREQ_SCRIPT=$PIPELINE_HOME"/plot_tagFreq.R"
+PLOT_TAG_FREQ_UNIQ_SCRIPT=$PIPELINE_HOME"/plot_tagFreqUniq.R"
+PLOT_TAG_GC_SCRIPT=$PIPELINE_HOME"/plot_tagGCcontent.R"
+PLOT_TAG_LENGTH_DIST_SCRIPT=$PIPELINE_HOME"/plot_tagLengthDistribution.R"
+
+#####################################################################################
+# definitions related to the BWA aligner:
+
+BWA_LOCATION=/cccbstore-rc/projects/cccb/apps/bin/bwa
+export PATH=$BWA_LOCATION:$PATH
+
+CONCURRENT_ALIGNMENT_PROCESSES=4
+
+#####################################################################################
+
+#definitions related to HOMER:
+#add HOMER to path
+export PATH=/cccbstore-rc/projects/cccb/apps/HOMER_current/bin/:$PATH
+
+#for seqlogo (creating motif logos)
+export PATH=/cccbstore-rc/projects/cccb/apps/HOMER_current/thirdPartyApps/weblogo/:$PATH
+
+FACTOR=factor
+HISTONE=histone
+
+#depending on whether histone marks or tfbs are specified, homer names the peak files differently:
+HISTONE_PEAKFILE_NAME=regions
+TF_PEAKFILE_NAME=peaks
+ANNOTATED_TAG='.annotated'
+PEAKINFO_FILE=peakInfo.txt
+PEAKFILE_EXT='.txt'
+
+#size of the regions to search for motif analysis
+MOTIF_TF_REGION_SIZE=200
+MOTIF_HISTONE_REGION_SIZE=1000
+
+#params for the differential peak enrichment analysis (these are homer default anyway, but can change)
+FOLD_ENRICHMENT=4
+PVAL=0.0001
+
+#prefix for the motif output dir.  The name changes based on the size of the region, but the prefix is constant
+MOTIF_DIR_PREFIX='Motifs'
+
+#output html files from the motif analysis:
+KNOWN_RESULTS_HTML='knownResults.html'
+DENOVO_RESULTS_HTML='homerResults.html'
+
+#output html files from the GO analysis:
+GENOME_ONTOLOGY_RESULTS_HTML='GenomeOntology.html'
+GENE_ONTOLOGY_RESULTS_HTML='geneOntology.html'
+
+#file suffix for the BED files created by homer:
+BED_FILE_SUFFIX='ucsc.bedGraph.gz'
+
+#####################################################################################################
+#some other configuration parameters-- most are "arbitrary" and can be left as-is.
+
+#the name (not path) of the sample sheet (containing sequencing metadata) located in the sample-specific directories:
+SAMPLE_SHEET_NAME=SampleSheet.csv
+
+# the prefix for the sample-specific directories (often 'Sample_').
+# Depending on the process producing the project directories + FASTQ files, this could change.
+SAMPLE_DIR_PREFIX=Sample_
+
+# a file suffix/extension for identifying the alignment scripts that are generated on-the-fly by a python script
+FORMATTED_ALIGN_SCRIPT_NAMETAG=_aln.sh
+
+#  the name for the directory where the alignments will output files.  This will be inside of the sample-specific directory 
+ALN_DIR_NAME=alignment
+
+# the desired output extension for the sorted, deduped, primary-only bam files
+BAM_EXTENSION=".sorted.rmdup.primary.bam"
+
+#a directory for the overall report html and and associated files- located in the project directory
+REPORT_DIR="output_report"
+
+#a directory where all the HOMER analysis output will be placed.  To be placed in PROJECT_DIR
+HOMER_DIR=homer_analysis
+
+# a folder to place the differential peak analysis:
+DIFF_PEAKS_DIR=differential_peaks
+
+#the name of the final html report produced by the pipeline.  To be placed in the REPORT_DIR
+FINAL_RESULTS_REPORT='results_report.html'
+
+#  the name of a temporary file which will keep track of all valid samples (based on the presence of data, etc)
+#  similar to the input sample file, but has entries removed.  If everything was good in the original sample file, 
+#  then it is just a copy of that.
+VALID_SAMPLE_FILE="valid_samples.txt"
+
+#  for ease, a temporary file that has a set of the samples to undergo alignment.  One sample name per line
+VALID_SAMPLE_LIST="valid_sample_list.tmp"
+
+############################################################################################################
+
+# some convenience variables
+TXT_EXT='.txt'
+NUM1=1
+NUM0=0
+############################################################################################################
+
+
+
+#########################################################
+# HOMER default output parameters:
+# These only have to be changed if HOMER changes the
+# names of their output files
+
+#name of the GC content file produced by HOMER:
+TAG_GC_CONTENT_FILE=tagGCcontent.txt
+
+#name of the nucleotide frequency file for all tags
+TAG_FREQ_FILE=tagFreq.txt
+
+#name of the nucleotide frequency file for UNIQUE tags
+TAG_FREQ_UNIQ_FILE=tagFreqUniq.txt
+
+#name of the tag autocorrelation file:
+TAG_AUTOCORRELATION_FILE=tagAutocorrelation.txt
+
+#name of the length distribution file:
+TAG_LENGTH_DISTRIBUTION_FILE=tagLengthDistribution.txt
+
+#name of the tag count distribution file:
+TAG_COUNT_DISTRIBUTION_FILE=tagCountDistribution.txt
+
+#########################################################
+# Name of the plots for QC:
+# These can be anything
+
+TAG_GC_PLOT=tag_gc.png
+TAG_FREQ_PLOT=tag_freq.png
+TAG_FREQ_UNIQ_PLOT=tag_freq_uniq.png
+TAG_AUTOCORRELATION_PLOT=tag_autocorrelation.png
+TAG_COUNT_DIST_PLOT=tag_count_distribution.png
+TAG_LENGTH_DIST_PLOT=tag_length_distribution.png
+#########################################################
