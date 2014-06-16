@@ -24,10 +24,13 @@ PLOT_TAG_FREQ_UNIQ_SCRIPT=$PIPELINE_HOME"/plot_tagFreqUniq.R"
 PLOT_TAG_GC_SCRIPT=$PIPELINE_HOME"/plot_tagGCcontent.R"
 PLOT_TAG_LENGTH_DIST_SCRIPT=$PIPELINE_HOME"/plot_tagLengthDistribution.R"
 
+
+#directory for picard tools jars:
+PICARD_LOCATION=/cccbstore-rc/projects/cccb/apps/picard-tools-current
 #####################################################################################
 # definitions related to the BWA aligner:
 
-BWA_LOCATION=/cccbstore-rc/projects/cccb/apps/bin/bwa
+BWA_LOCATION=/cccbstore-rc/projects/cccb/apps/bin/
 export PATH=$BWA_LOCATION:$PATH
 
 CONCURRENT_ALIGNMENT_PROCESSES=4

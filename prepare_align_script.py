@@ -1,4 +1,4 @@
-y"""
+"""
 This script performs some basic checking (e.g. if FASTQ files exist)
 and writes the appropriate parameters into the template alignment script
 """
@@ -261,7 +261,7 @@ if __name__ == '__main__':
         map(write_script, all_samples)
 
         #write the validated sample files:
-        write_valid_sample_pairings(validated_sample_filepath, sample_pairings, validated_sample_names):
+        write_valid_sample_file(validated_sample_filepath, sample_pairings, validated_sample_names)
         write_valid_sample_list(valid_sample_list_filepath, validated_sample_names)
 
     except KeyError:

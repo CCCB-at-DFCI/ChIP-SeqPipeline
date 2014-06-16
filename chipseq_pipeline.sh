@@ -287,8 +287,11 @@ echo ""
 #first argument is the alignment script (absolute path)
 function do_align
 {
+        #first, add the location of the picard tools to the script:
+        sed -i "s?%PICARD_DIR%?$PICARD_LOCATION?g" $1
+
 	echo "Run alignment with script at: "
-	echo $PROJECT_DIR'/'$SAMPLE_DIR_PREFIX$sample'/'$sample$FORMATTED_ALIGN_SCRIPT_NAMETAG   
+	echo $1
 	date
 	echo ""
         chmod a+x $1

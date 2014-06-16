@@ -60,7 +60,7 @@ echo the temp directory is $TMPDIR
 if [ $PAIRED -eq $NUM0 ]; then
     # Run BWA alignment, BAM conversion, and sorting
     bwa aln -t 4 $BWAIDX $FASTQFILEA >$TMPDIR/s1_1.sai
-    bwa samse $BWAIDX $TMPDIR/s1_1.sai $SAMPLE_DIR/$FASTQFILEA | samtools view -Shb - >$TMPDIR/aln.bam
+    bwa samse $BWAIDX $TMPDIR/s1_1.sai $FASTQFILEA | samtools view -Shb - >$TMPDIR/aln.bam
 
 elif [ $PAIRED -eq $NUM1 ]; then
     bwa aln -t 6 $BWAIDX $FASTQFILEA >$TMPDIR/s1_1.sai
