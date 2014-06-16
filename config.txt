@@ -73,6 +73,9 @@ GENE_ONTOLOGY_RESULTS_HTML='geneOntology.html'
 #file suffix for the BED files created by homer:
 BED_FILE_SUFFIX='ucsc.bedGraph.gz'
 
+#a tag for easily identifying the output from the differential peaks analysis
+DIFF_PEAKS_TAG=.diff_peaks
+
 #####################################################################################################
 #some other configuration parameters-- most are "arbitrary" and can be left as-is.
 
@@ -112,6 +115,9 @@ VALID_SAMPLE_FILE="valid_samples.txt"
 #  for ease, a temporary file that has a set of the samples to undergo alignment.  One sample name per line
 VALID_SAMPLE_LIST="valid_sample_list.tmp"
 
+#a name for the default contrast file.  If none is specified, then we will perform an all-vs-all comparison
+# this will be the name of the file which will contain all the contrast info
+DEFAULT_CONTRAST_FILE=contrasts.txt
 ############################################################################################################
 
 # some convenience variables
@@ -145,6 +151,8 @@ TAG_LENGTH_DISTRIBUTION_FILE=tagLengthDistribution.txt
 #name of the tag count distribution file:
 TAG_COUNT_DISTRIBUTION_FILE=tagCountDistribution.txt
 
+#name of the file with the GC genome content:
+GENOME_GC_CONTENT_FILE=genomeGCcontent.txt
 #########################################################
 # Name of the plots for QC:
 # These can be anything

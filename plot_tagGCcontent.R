@@ -2,17 +2,15 @@ library(lattice)
 library(reshape)
 library(directlabels)
 
-# options(echo=TRUE) # if you want see commands in output file
 args <- commandArgs(trailingOnly = TRUE)
-# print(args)
-# trailingOnly=TRUE means that only your arguments are returned, check:
-# print(commandsArgs(trailingOnly=FALSE))
-
 folder <- args[1]
+input.filename <- args[2]
+gc.content.file <-args[3]
+output.img <- args[4]
 
 
-data.tag <- read.delim( paste(folder, "tagGCcontent.txt", sep="/") )
-data.genome <- read.delim( paste(folder, "genomeGCcontent.txt", sep="/") )
+data.tag <- read.delim( paste(folder, input.filename, sep="/") )
+data.genome <- read.delim( paste(folder, gc.content.file, sep="/") )
 
 data <- 
 rbind(
@@ -21,13 +19,12 @@ rbind(
 )
 
 
-png(filename=paste(folder,"tagGCcontent.png", sep="/"), width=400, height=300, units="px")
+png(filename=paste(folder, output.img, sep="/"), width=600, height=400, units="px")
 
 direct.label(
 	xyplot(Normalized.Fraction.PDF.~GC., data=data, groups=name, 
 		type="l", lwd=2, 
-		main=folder, xlab="GC-content of fragments", ylab="Normalized fraction"
+		main=basename(folder), xlab="GC-content of fragments", ylab="Normalized fraction"
 	)
 )
-
 dev.off()

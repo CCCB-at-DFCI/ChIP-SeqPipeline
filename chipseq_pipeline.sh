@@ -47,7 +47,7 @@ function usage
 		-c | --contrasts contrast_file (optional) 
 		-g | --genome
 		-peakMode (optional, default is 'factor' for TFBS.  set to 'histone' for histone marks)
-                -noalign (optional, default behavior is to align) 
+                -noalign (optional, default behavior is to align.  If this option is set, need properly named BAM files) 
                 -paired (optional, default= single-end) 
 		-test (optional, for simple test)"
 	echo "**************************************************************************************************"
@@ -185,6 +185,7 @@ if [ "$TEST" == "" ]; then
     TEST=0
 fi
 
+#if no configuration file was given, then use teh default one
 if [ "$CONFIG" == "" ]; then
     CONFIG=/cccbstore-rc/projects/cccb/pipelines/ChIP_Seq_pipeline/config.txt
     echo ""
@@ -192,16 +193,14 @@ if [ "$CONFIG" == "" ]; then
 fi
 
 
-
 # After inputs have been read, proceed with setting up parameters based on these inputs:
-
-#read-in the non-dynamic configuration parameters (and export via set to have these as environment variables):
+# double check that the configuration file exists:
 if [[ ! -f "$CONFIG" ]]; then
     echo "Could not locate a configuration file at "$CONFIG
     exit 1
 fi 
 
-
+#read-in the non-dynamic configuration parameters (and export via set to have these as environment variables):
 # !!! important-- import the configuration file !!!
 set -a
 source $CONFIG
@@ -212,14 +211,14 @@ if [ "$PEAKMODE" == "$HISTONE" ]; then
 	echo "Searching for histone marks and setting the motif detection region size to "$MOTIF_HISTONE_REGION_SIZE
 	echo "Can change this in the configuration file, if desired.(see HOMER documentation)"
 	MOTIF_REGION_SIZE=$MOTIF_HISTONE_REGION_SIZE
-	PEAKFILE_NAME=$HISTONE_PEAKFILE_NAME
+	PEAKFILE_NAME=$HISTONE_PEAKFILE_NAME$PEAKFILE_EXT
 else
 	PEAKMODE=$FACTOR
 	MOTIF_REGION_SIZE=$MOTIF_TF_REGION_SIZE
 	echo ""
-	echo "Searching for transcription factor binding sites, and setting the motif region size to $MOTIF_TF_REGION_SIZE.
+	echo "Searching for transcription factor binding sites, and setting the motif region size to $MOTIF_TF_REGION_SIZE."
 	echo "Can change this in the configuration file, if desired.(see HOMER documentation)"
-	PEAKFILE_NAME=$TF_PEAKFILE_NAME
+	PEAKFILE_NAME=$TF_PEAKFILE_NAME$PEAKFILE_EXT
 fi
 
 
@@ -229,7 +228,12 @@ export SAMPLES_FILE
 export ASSEMBLY
 export PAIRED_READS
 export VALID_SAMPLE_FILE=$PROJECT_DIR'/'$VALID_SAMPLE_FILE
+export VALID_SAMPLE_LIST=$PROJECT_DIR'/'$VALID_SAMPLE_LIST
 export PEAKFILE_NAME
+
+
+#remove any 'valid sample list' files that may exist:
+rm $VALID_SAMPLE_LIST
 #############################################################
 
 #identify the correct genome files to use
@@ -263,6 +267,7 @@ print_sample_report $SAMPLES_FILE
 echo ""
 if [ "$CONTRAST_FILE" == "" ]; then
 	echo "Will perform all-vs-all differential peak analysis since no contrast file was supplied."
+        CONTRAST_FILE=$PROJECT_DIR'/'$DEFAULT_CONTRAST_FILE
 else
 	echo "Will attempt to perform the following contrasts (from "$CONTRAST_FILE"):"
 	print_contrast_report $CONTRAST_FILE
@@ -298,15 +303,14 @@ function do_align
 
 if [ $ALN -eq $NUM1 ]; then
 
-    #call a python script that scans the sample directory, checks for the correct files,
-    # and injects the proper parameters into the alignment shell script
-
+    # call a python script that scans the sample directory, checks for the correct files,
+    # and injects the proper parameters into the alignment shell script:
     $PYTHON $PREPARE_ALIGN_SCRIPT || { echo "Something went wrong in preparing the alignment scripts.  Exiting."; exit 1; }
 
     echo "After examining project structure, will attempt to align on the following samples:"
     print_sample_report $VALID_SAMPLE_FILE
 
-    #given the valid samples (determined by the python script), run the alignments
+    # given the valid samples (determined by the python script), run the alignments
     # note that the number of parallel alignments is determined by a configuration parameter
 
     num_tasks=0
@@ -336,21 +340,31 @@ else
    
     #given bam files contained anywhere in PROJECT_HOME, construct the assumed project
     #hierarchy and create symbolic links to the bam files
+ 
+    echo $PROJECT_DIR
+    while read line; do
+        CHIP_SAMPLE=$(echo $line | awk '{print $1}')
+        INPUT_SAMPLE=$(echo $line | awk '{print $2}')
+        CHIP_BAM_FILE=$( find -L $PROJECT_DIR -type f -name $CHIP_SAMPLE*bam )
+        INPUT_BAM_FILE=$( find -L $PROJECT_DIR -type f -name $INPUT_SAMPLE*bam )
 
-    for BAM_FILE in $( find -L . -type f -name *bam ); do
-        s=$( basename $BAM_FILE )
-        SAMPLE=${s%.bam}
-	SAMPLE_ALN_DIR=$PROJECT_DIR'/'$SAMPLE_DIR_PREFIX$SAMPLE'/'$ALN_DIR_NAME
-	mkdir -p $SAMPLE_ALN_DIR
-	ln -s $BAM_FILE $SAMPLE_ALN_DIR'/'$SAMPLE$BAM_EXTENSION
-	echo $SAMPLE >> $VALID_SAMPLE_LIST
-    done
+        if [ "$CHIP_BAM_FILE" != "" ] && [ "$INPUT_BAM_FILE" != "" ]; then
+	        CHIP_SAMPLE_ALN_DIR=$PROJECT_DIR'/'$SAMPLE_DIR_PREFIX$CHIP_SAMPLE'/'$ALN_DIR_NAME
+	        INPUT_SAMPLE_ALN_DIR=$PROJECT_DIR'/'$SAMPLE_DIR_PREFIX$INPUT_SAMPLE'/'$ALN_DIR_NAME
+	        mkdir -p $CHIP_SAMPLE_ALN_DIR
+	        mkdir -p $INPUT_SAMPLE_ALN_DIR
+	        ln -s $CHIP_BAM_FILE $CHIP_SAMPLE_ALN_DIR'/'$CHIP_SAMPLE$BAM_EXTENSION
+	        ln -s $INPUT_BAM_FILE $INPUT_SAMPLE_ALN_DIR'/'$INPUT_SAMPLE$BAM_EXTENSION
+	        echo $CHIP_SAMPLE >> $VALID_SAMPLE_LIST
+	        echo $INPUT_SAMPLE >> $VALID_SAMPLE_LIST
+		printf "%s\t%s\n" $CHIP_SAMPLE $INPUT_SAMPLE >>$VALID_SAMPLE_FILE
+	fi
+    done < $SAMPLES_FILE
 
     echo "Found BAM files for the following samples:"
     cat $VALID_SAMPLE_LIST
     
 fi
-
 
 ############################################################
 
@@ -363,15 +377,22 @@ $PYTHON $CHECK_BAM_SCRIPT
 ############################################################
 
 #create the analysis directory for the HOMER output:
-HOMER_DIR=$PROJECT_DIR'/'HOMER_DIR
+HOMER_DIR=$PROJECT_DIR'/'$HOMER_DIR
 mkdir $HOMER_DIR
+
+#check creation was succesful:
+if [ ! -d "$HOMER_DIR" ]; then
+	echo "The output directory for the HOMER analysis does not exist.  Exiting"
+	exit 1
+fi
 
 #create a report directory to hold the report and the output analysis:
 REPORT_DIR=$PROJECT_DIR'/'$REPORT_DIR
 mkdir $REPORT_DIR
 
-if [ ! -d "$HOMER_DIR" ]; then
-	echo "The output directory for the HOMER analysis does not exist.  Exiting"
+#check creation was succesful:
+if [ ! -d "$REPORT_DIR" ]; then
+	echo "The output directory for the results report does not exist.  Exiting"
 	exit 1
 fi
 
@@ -384,14 +405,13 @@ while read PAIRING; do
 	SAMPLENAME=$(echo $PAIRING | awk '{print $1}')
         SAMPLENAME_INPUT=$(echo $PAIRING | awk '{print $2}')
 
-	BAMFILE=$PROJECT_DIR'/'$SAMPLE_DIR_PREFIX'/'$SAMPLENAME'/'$ALN_DIR_NAME'/'SAMPLENAME$BAM_EXTENSION
-	BAMFILE_INPUT=$PROJECT_DIR'/'$SAMPLE_DIR_PREFIX'/'$SAMPLENAME_INPUT'/'$ALN_DIR_NAME'/'SAMPLENAME_INPUT$BAM_EXTENSION
+	BAMFILE=$PROJECT_DIR'/'$SAMPLE_DIR_PREFIX$SAMPLENAME'/'$ALN_DIR_NAME'/'$SAMPLENAME$BAM_EXTENSION
+	BAMFILE_INPUT=$PROJECT_DIR'/'$SAMPLE_DIR_PREFIX$SAMPLENAME_INPUT'/'$ALN_DIR_NAME'/'$SAMPLENAME_INPUT$BAM_EXTENSION
 
 	SAMFILE=$(echo $BAMFILE | sed -e 's/\.bam/\.sam/')
 	SAMFILE_INPUT=$(echo $BAMFILE_INPUT | sed -e 's/\.bam/\.sam/')
 
 	echo "Peak analysis for: $SAMPLENAME vs $SAMPLENAME_INPUT"
-
 
 	echo "Making Tag Directory: $SAMPLENAME"
 	samtools view -h -o $SAMFILE $BAMFILE || { echo 'BAM to SAM fell over!' >&2; exit 1; }
@@ -410,14 +430,14 @@ while read PAIRING; do
 	makeTagDirectory $HOMER_DIR'/'$SAMPLENAME -update -genome $ASSEMBLY -checkGC > $HOMER_DIR'/'$SAMPLENAME.checkGC.log 2>&1 || { echo 'makeTagDirectory, checkGC fell over!' >&2; exit 1; }
 	makeUCSCfile $HOMER_DIR'/'$SAMPLENAME -o auto -i $HOMER_DIR'/'$SAMPLENAME_INPUT > $HOMER_DIR'/'$SAMPLENAME.makeUCSCfile.log 2>&1 || { echo 'makeUCSCfile fell over!' >&2; exit 1; }
 
-	Rscript $PLOT_TAG_AUTOCORRELATION_SCRIPT $HOMER_DIR'/'$SAMPLENAME || { echo $PLOT_TAG_AUTOCORRELATION_SCRIPT' fell over!' >&2; exit 1; }
-	Rscript $PLOT_TAG_COUNT_DIST_SCRIPT $HOMER_DIR'/'$SAMPLENAME || { echo $PLOT_TAG_COUNT_DIST_SCRIPT' fell over!' >&2; exit 1; }
-	Rscript $PLOT_TAG_FREQ_SCRIPT $HOMER_DIR'/'$SAMPLENAME || { echo $PLOT_TAG_FREQ_SCRIPT' fell over!' >&2; exit 1; }
-	Rscript $PLOT_TAG_FREQ_UNIQ_SCRIPT $HOMER_DIR'/'$SAMPLENAME || { echo $PLOT_TAG_FREQ_UNIQ_SCRIPT' fell over!' >&2; exit 1; }
-	Rscript $PLOT_TAG_GC_SCRIPT $HOMER_DIR'/'$SAMPLENAME || { echo $PLOT_TAG_GC_SCRIPT' fell over!' >&2; exit 1; }
-	Rscript $PLOT_TAG_LENGTH_DIST_SCRIPT $HOMER_DIR'/'$SAMPLENAME || { echo $PLOT_TAG_LENGTH_DIST_SCRIPT' fell over!' >&2; exit 1; }
+	Rscript $PLOT_TAG_AUTOCORRELATION_SCRIPT $HOMER_DIR'/'$SAMPLENAME $TAG_AUTOCORRELATION_FILE $TAG_AUTOCORRELATION_PLOT || { echo $PLOT_TAG_AUTOCORRELATION_SCRIPT' fell over!' >&2; exit 1; }
+	Rscript $PLOT_TAG_COUNT_DIST_SCRIPT $HOMER_DIR'/'$SAMPLENAME $TAG_COUNT_DISTRIBUTION_FILE $TAG_COUNT_DIST_PLOT || { echo $PLOT_TAG_COUNT_DIST_SCRIPT' fell over!' >&2; exit 1; }
+	Rscript $PLOT_TAG_FREQ_SCRIPT $HOMER_DIR'/'$SAMPLENAME $TAG_FREQ_FILE $TAG_FREQ_PLOT || { echo $PLOT_TAG_FREQ_SCRIPT' fell over!' >&2; exit 1; }
+	Rscript $PLOT_TAG_FREQ_UNIQ_SCRIPT $HOMER_DIR'/'$SAMPLENAME $TAG_FREQ_UNIQ_FILE $TAG_FREQ_UNIQ_PLOT || { echo $PLOT_TAG_FREQ_UNIQ_SCRIPT' fell over!' >&2; exit 1; }
+	Rscript $PLOT_TAG_GC_SCRIPT $HOMER_DIR'/'$SAMPLENAME $TAG_GC_CONTENT_FILE $GENOME_GC_CONTENT_FILE $TAG_GC_PLOT || { echo $PLOT_TAG_GC_SCRIPT' fell over!' >&2; exit 1; }
+	Rscript $PLOT_TAG_LENGTH_DIST_SCRIPT $HOMER_DIR'/'$SAMPLENAME $TAG_LENGTH_DISTRIBUTION_FILE $TAG_LENGTH_DIST_PLOT || { echo $PLOT_TAG_LENGTH_DIST_SCRIPT' fell over!' >&2; exit 1; }
 
-done
+done < $VALID_SAMPLE_FILE
 
 ############################################################################
 
@@ -429,19 +449,24 @@ done
 # $2 is a full path to the tag directory for the target file 
 # $3 is a full path to the tag directory for the input
 # $4 is a full path to the directory for the differential peak files
+# NOTE: this runs the comparisons both ways-- the -rev flag looks for peaks enriched in the 'background' sample.
+
 function run_diff_peaks
 {
 	echo getDifferentialPeaks $1 $2 $3 -F $FOLD_ENRICHMENT -P $PVAL > $4'/'$(basename $2)'_vs_'$(basename $3)'.tsv' 2> $4'/'$(basename $2)'_vs_'$(basename $3)'.log'
 	echo getDifferentialPeaks $1 $2 $3 -rev -F $FOLD_ENRICHMENT -P $PVAL > $4'/'$(basename $2)'_vs_'$(basename $3)'.tsv' 2> $4'/'$(basename $2)'_vs_'$(basename $3)'.log'
-	getDifferentialPeaks $1 $2 $3 -F $FOLD_ENRICHMENT -P $PVAL > $4'/'$(basename $2)'_vs_'$(basename $3)'.tsv' 2> $4'/'$(basename $2)'_vs_'$(basename $3)'.log'
-	getDifferentialPeaks $1 $2 $3 -rev -F $FOLD_ENRICHMENT -P $PVAL > $4'/'$(basename $2)'_vs_'$(basename $3)'.tsv' 2> $4'/'$(basename $2)'_vs_'$(basename $3)'.log'
+	getDifferentialPeaks $1 $2 $3 -F $FOLD_ENRICHMENT -P $PVAL > $4'/'$(basename $2)'_vs_'$(basename $3)$DIFF_PEAKS_TAG'.tsv' 2> $4'/'$(basename $2)'_vs_'$(basename $3)'.log'
+	getDifferentialPeaks $1 $2 $3 -rev -F $FOLD_ENRICHMENT -P $PVAL > $4'/'$(basename $3)'_vs_'$(basename $2)$DIFF_PEAKS_TAG'.tsv' 2> $4'/'$(basename $3)'_vs_'$(basename $2)'.log'
 }
 
 echo "Run differential peak analysis.  Looking for peaks with fold enrichment $FOLD_ENRICHMENT with p-value of $PVAL"
 
-#if the contrast file was not given:
+
+#create	output directory:
+mkdir $HOMER_DIR'/'$DIFF_PEAKS_DIR
+
+#if the contrast file was not given (in which case, do all-vs-all comparison):
 if [ ! -f $CONTRAST_FILE ]; then
-	#run all-vs-all if no contrast file was given
 	#create a contrast file so the analysis can be run (and logged) in the same fashion
 
 	#this line reads the first column of the valid sample file (the chip'd samples) and puts the names into an array ALL_SAMPLES
@@ -453,7 +478,7 @@ if [ ! -f $CONTRAST_FILE ]; then
         	let start=i+1
         	for (( j=$start; j<$L; j++ ))
         	do
-			print "%s\t%s\n" ${ALL_SAMPLES[$i]} ${ALL_SAMPLES[$j]} >> $PROJECT_DIR'/'$CONTRAST_FILE
+			printf "%s\t%s\n" ${ALL_SAMPLES[$i]} ${ALL_SAMPLES[$j]} >> $CONTRAST_FILE
         	done
 	done
 fi
@@ -461,9 +486,9 @@ fi
 while read CONTRAST; do
         SAMPLE_A=$(echo $CONTRAST | awk '{print $1}')
         SAMPLE_B=$(echo $CONTRAST | awk '{print $2}')
-	SAMPLE_A_PEAK_DIR=$PROJECT_DIR'/'$HOMER_DIR'/'$SAMPLE_A
-	SAMPLE_B_PEAK_DIR=$PROJECT_DIR'/'$HOMER_DIR'/'$SAMPLE_B
-	run_diff_peaks $SAMPLE_A_PEAK_DIR'/'$PEAKFILE_NAME $SAMPLE_A_PEAK_DIR $SAMPLE_B_PEAK_DIR $PROJECT_DIR'/'$HOMER_DIR'/'$DIFF_PEAKS_DIR &
+	SAMPLE_A_PEAK_DIR=$HOMER_DIR'/'$SAMPLE_A
+	SAMPLE_B_PEAK_DIR=$HOMER_DIR'/'$SAMPLE_B
+	run_diff_peaks $SAMPLE_A_PEAK_DIR'/'$PEAKFILE_NAME $SAMPLE_A_PEAK_DIR $SAMPLE_B_PEAK_DIR $HOMER_DIR'/'$DIFF_PEAKS_DIR &
 done < $CONTRAST_FILE
 
 #wait for all these processes to finish before moving on:
@@ -487,6 +512,6 @@ fi
 
 ############################################################
 #cleanup
-rm $VALID_SAMPLE_LIST
+#rm $VALID_SAMPLE_LIST
 
 

@@ -6,7 +6,7 @@ This script is run on aligned data--
 """
 
 import os
-
+import sys
 
 def read_samples(samples_file):
     """
@@ -54,7 +54,7 @@ def check_bam(sample_list, project_dir, sample_dir_prefix, align_dir_name, bam_s
           valid_samples.append(sample)
         else:
           print "BAM or count file was not found for sample "+str(sample)+".  Perhaps the alignment failed?"
-    return valid_samples
+    return set(valid_samples)
 
 
 def write_valid_sample_file(validated_sample_filepath, sample_pairings, validated_sample_name_set):
@@ -85,13 +85,14 @@ if __name__=="__main__":
     sample_list_filepath = os.path.join(project_dir, sample_list_file) 
 
     #parse the files to get the pairings and the 'master list'
-    sample_pairings = read_samples(samples_file)
+    sample_pairings = read_samples(sample_file)
+
     sample_list = read_sample_list(sample_list_file)
 
-    #determine valid sdamples by the presence of a bam file in the appropriate location:
+    #determine valid samples by the presence of a bam file in the appropriate location:
     valid_samples = check_bam(sample_list, project_dir, sample_dir_prefix, align_dir_name, bam_suffix)
 
     #rewrite the sample files
-    write_valid_sample_file(validated_sample_filepath, sample_pairings, validated_sample_name_set)
+    write_valid_sample_file(validated_sample_filepath, sample_pairings, valid_samples)
     write_valid_sample_list(sample_list_filepath, valid_samples)
 

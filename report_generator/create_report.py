@@ -28,6 +28,9 @@ GO_FILE_DESCRIPTION = "#GO_FILE_DESCRIPTION#"
 BED_FILE_SECTION="#BED_FILE_SECTION#"
 BED_FILE_LINK="#BED_FILE_LINK#"
 BED_FILE_BASENAME="#BED_FILE_BASENAME#"
+DIFF_PEAKS_SECTION="#DIFF_PEAK_SECTION#"
+DIFF_PEAK_FILE_LINK="#DIFF_PEAK_FILE_LINK#"
+DIFF_PEAK_FILE_BASENAME="#DIFF_PEAK_FILE_BASENAME#"
 
 DIV_REGEX = "<div.*</div>" #greedy match!
 
@@ -264,6 +267,31 @@ def inject_bedfile_links(template_html, all_sample_ids, config, project_dir):
     return template_html
 
 
+def inject_diff_peaks_links(template_html, all_sample_ids, config, project_dir):
+
+    pattern = get_search_pattern(DIFF_PEAKS_SECTION)
+    match = extract_template_textblock(pattern, template_html)
+
+    if match:
+        new_content = ""
+        analysis_dir = os.path.join(project_dir, config['ANALYSIS_DIR_NAME'])
+        file_matches = glob.glob(os.path.join(analysis_dir, '*', '*'+str(config['DIFF_PEAKS_TAG']+'*')))
+
+        if len(file_matches)>0:
+            for f in file_matches:
+                relative_path = os.path.relpath(f, os.path.join(project_dir, config['REPORT_DIR']))
+                s = match
+                s = re.sub(DIFF_PEAK_FILE_LINK, relative_path, s)
+                s = re.sub(DIFF_PEAK_FILE_BASENAME, os.path.basename(f), s)
+                content = re.findall(DIV_REGEX, s, flags=re.DOTALL)
+                new_content += content[0]
+        else:
+            new_content='<div class="alert alert-info">Differential peak analysis files were not created or found.</div>'
+
+        template_html = re.sub(pattern, new_content, template_html, flags=re.DOTALL)
+    return template_html
+
+
 def extract_peak_analysis_metadata(peakfile):
 	
 	d={}
@@ -310,10 +338,10 @@ if __name__ == "__main__":
 	config['QC_OUTPUT']=[
 			(os.environ['TAG_GC_CONTENT_FILE'],os.environ['TAG_GC_PLOT']),
 			(os.environ['TAG_AUTOCORRELATION_FILE'], os.environ['TAG_AUTOCORRELATION_PLOT']),
-			(os.environ['TAG_FREQ_FILE'],os.environ['TAG_FREQ_PL0T']),
-			(os.environ['TAG_FREQ_UNIQ_FILE'],os.environ['TAG_UNIQ_FREQ_PL0T']),
-			(os.environ['TAG_COUNT_DISTRIBUTION_FILE'],os.environ['TAG_COUNT_DIST_PL0T']),
-			(os.environ['TAG_LENGTH_DISTRIBUTION_FILE'],os.environ['TAG_LENGTH_DIST_PL0T'])]
+			(os.environ['TAG_FREQ_FILE'],os.environ['TAG_FREQ_PLOT']),
+			(os.environ['TAG_FREQ_UNIQ_FILE'],os.environ['TAG_FREQ_UNIQ_PLOT']),
+			(os.environ['TAG_COUNT_DISTRIBUTION_FILE'],os.environ['TAG_COUNT_DIST_PLOT']),
+			(os.environ['TAG_LENGTH_DISTRIBUTION_FILE'],os.environ['TAG_LENGTH_DIST_PLOT'])]
 
 	peakfile_prefix = os.environ['PEAKFILE_NAME']
 	peakfile_name = str(peakfile_prefix)+os.environ['PEAKFILE_EXT']
@@ -325,6 +353,7 @@ if __name__ == "__main__":
 	config['GO_ANALYSIS_OUTPUT']=[('Genome ontology- based on peaks',os.environ['GENOME_ONTOLOGY_RESULTS_HTML']),
 					('Gene ontology analysis of bound genes',os.environ['GENE_ONTOLOGY_RESULTS_HTML'])]
 	config['BED_FILE_SUFFIX']=os.environ['BED_FILE_SUFFIX']
+	config['DIFF_PEAKS_TAG']=os.environ['DIFF_PEAKS_TAG']
 
 	#get the chIP'd samples:
 	all_sample_ids = get_sample_ids(os.path.join(project_dir, config['SAMPLES_FILE']))
@@ -336,6 +365,7 @@ if __name__ == "__main__":
 	html = inject_motif_reports(html, all_sample_ids, config, project_dir)
 	html = inject_ontology_reports(html, all_sample_ids, config, project_dir)
 	html = inject_bedfile_links(html, all_sample_ids, config, project_dir)
+	html = inject_diff_peaks_links(html, all_sample_ids, config, project_dir)
 
 	write_completed_template(os.path.join(project_dir, config['REPORT_DIR'], os.environ['FINAL_RESULTS_REPORT']), html)
 
