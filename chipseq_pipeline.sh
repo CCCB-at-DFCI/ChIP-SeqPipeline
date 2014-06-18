@@ -211,14 +211,14 @@ if [ "$PEAKMODE" == "$HISTONE" ]; then
 	echo "Searching for histone marks and setting the motif detection region size to "$MOTIF_HISTONE_REGION_SIZE
 	echo "Can change this in the configuration file, if desired.(see HOMER documentation)"
 	MOTIF_REGION_SIZE=$MOTIF_HISTONE_REGION_SIZE
-	PEAKFILE_NAME=$HISTONE_PEAKFILE_NAME$PEAKFILE_EXT
+	PEAKFILE_NAME=$HISTONE_PEAKFILE_NAME
 else
 	PEAKMODE=$FACTOR
 	MOTIF_REGION_SIZE=$MOTIF_TF_REGION_SIZE
 	echo ""
 	echo "Searching for transcription factor binding sites, and setting the motif region size to $MOTIF_TF_REGION_SIZE."
 	echo "Can change this in the configuration file, if desired.(see HOMER documentation)"
-	PEAKFILE_NAME=$TF_PEAKFILE_NAME$PEAKFILE_EXT
+	PEAKFILE_NAME=$TF_PEAKFILE_NAME
 fi
 
 
