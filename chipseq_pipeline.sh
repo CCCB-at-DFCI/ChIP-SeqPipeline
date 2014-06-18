@@ -41,12 +41,12 @@ function usage
 {
 	echo "**************************************************************************************************"
 	echo "usage: 
-		-d | --dir sample_directory
-		-config (configuration file) 
-		-s | --samples samples_file 
-		-c | --contrasts contrast_file (optional) 
-		-g | --genome
-		-peakMode (optional, default is 'factor' for TFBS.  set to 'histone' for histone marks)
+		-d | --dir <path_to_sample_directory> (required)
+		-s | --samples <path_to_samples_file> (required)
+		-g | --genome <genome_id> (hg19, mm10) (required)
+		-c | --contrasts <path_to_contrast_file> (optional) 
+		-config <path_to_custom_configuration_file> (optional)
+		-peakMode <mode> (optional, default is 'factor' for TFBS.  set to 'histone' for histone marks)
                 -noalign (optional, default behavior is to align.  If this option is set, need properly named BAM files) 
                 -paired (optional, default= single-end) 
 		-test (optional, for simple test)"
