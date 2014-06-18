@@ -7,6 +7,7 @@ PIPELINE_HOME=/cccbstore-rc/projects/cccb/pipelines/ChIP_Seq_pipeline
 REPORT_TEMPLATE_DIR=$PIPELINE_HOME/report_generator
 REPORT_TEMPLATE_LIBRARIES=$REPORT_TEMPLATE_DIR/lib/
 REPORT_TEMPLATE_HTML=$REPORT_TEMPLATE_DIR/chipseq_template.html
+HELP_PAGE_CONTENT=$REPORT_TEMPLATE_DIR'/explanations.html'
 
 # the location of the template alignment scripts:
 ALIGN_SCRIPT_TEMPLATE=$PIPELINE_HOME/BWA_aln_template.sh

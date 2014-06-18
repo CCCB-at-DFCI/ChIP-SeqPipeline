@@ -1,0 +1,85 @@
+<!--
+This file contains snippets of html for use in populating the help section of the output report
+Sections are copied into the final HTML report as necessary (dependent on input parameters, etc)
+-->
+
+
+
+#QUALITY_REPORT_HELP#
+<div>
+	<h3>
+		Quality report
+	</h3>
+	ChIP-Seq metadata extracted from the result files.  Here, you can view the parameters used in the peak-calling algorithm, the IP efficiency, and other parameters of 
+interest.
+Several plots are produced which may help to identify potential problems with the experiment.  Further description on interpretation of the QC data may be found   
+	<a href="http://homer.salk.edu/homer/chipseq/qc.html" target="_blank">here</a>.
+</div>
+#QUALITY_REPORT_HELP#
+
+
+
+
+#PEAK_ANALYSIS_HELP#
+<div>
+	<h3>
+		Peak Analysis
+	</h3>
+	By default, the peaks returned by the analysis are filtered for greater than 4-fold enrichment over input and Poisson p-value threshold of 0.0001.  
+	<ul>
+		<li>peakInfo.txt: This file contains metadata about the peak calling- particularly the parameters used in the algorithm.  Essentially the header section of
+			the full peaks file below.
+		</li>
+		<li>(peaks|regions).txt:  The enriched peaks, in tab-delimited format, which can be opened for inspection in either a text editor or spreadsheet 
+application.</li>
+		<li>(peaks|regions).annotated.txt:  This file expands on the previous peak file, including genomic and functional annotations.</li>
+	</ul>		
+</div>
+#PEAK_ANALYSIS_HELP#
+
+
+
+
+#MOTIF_ANALYSIS_HELP#
+<div>
+	<h3>
+		Motif analysis
+	</h3>
+	HOMER performs both known/documented (knownResults.html) and <i>De Novo</i> (homerResults.html) motif analyses.  Depending on the size of the region specified in the 
+input parameters, the analysis has the ability to find related, cooperative motifs in the region surrounding the ChIP peaks.  Information about specific motifs be found by 
+following links in the reports.  
+</div>
+#MOTIF_ANALYSIS_HELP#
+
+
+
+#GO_ANALYSIS_HELP#
+<div>
+	<h3>
+	GO Analysis
+	</h3>
+	By default, HOMER performs a GO-term analysis related to the enriched peaks and summarizes the results in HTML files.
+</div>
+#GO_ANALYSIS_HELP#
+
+
+#DIFFERENTIAL_PEAKS_HELP#
+<div>
+	<h3>
+		Differential peaks analysis
+	</h3>
+	Differential peaks between ChIP samples are performed in both directions, so that enriched peaks in each sample may be identified.  In this analysis, the 
+	input parameters specified that peaks were enriched when there was a #FOLD_CHANGE#-fold change with a Poisson p-value threshold of #PVAL#.  The output files are in 
+tab-separated format, suitable for use with Excel or other spreadsheet programs.   
+</div>
+#DIFFERENTIAL_PEAKS_HELP#
+
+
+#ALIGNMENT_HELP#
+<div>
+	<h3>
+		Read alignment
+	</h3>
+	Reads were mapped to the genome using the <a href="http://bio-bwa.sourceforge.net/" target="_blank">BWA aligner</a>.
+</div>
+#ALIGNMENT_HELP#

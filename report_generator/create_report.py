@@ -31,6 +31,16 @@ BED_FILE_BASENAME="#BED_FILE_BASENAME#"
 DIFF_PEAKS_SECTION="#DIFF_PEAK_SECTION#"
 DIFF_PEAK_FILE_LINK="#DIFF_PEAK_FILE_LINK#"
 DIFF_PEAK_FILE_BASENAME="#DIFF_PEAK_FILE_BASENAME#"
+FOLD_CHANGE="#FOLD_CHANGE#"
+PVAL="#PVAL#"
+DEFAULT_HELP_SECTIONS=[
+	"#QUALITY_REPORT_HELP#",
+	"#PEAK_ANALYSIS_HELP#",
+	"#MOTIF_ANALYSIS_HELP#",
+	"#GO_ANALYSIS_HELP#",
+	"#DIFFERENTIAL_PEAKS_HELP#",
+	"#ALIGNMENT_HELP#"
+]
 
 DIV_REGEX = "<div.*</div>" #greedy match!
 
@@ -292,6 +302,24 @@ def inject_diff_peaks_links(template_html, all_sample_ids, config, project_dir):
     return template_html
 
 
+def inject_help_section(template_html, help_html_file, config):
+    
+    new_content = ""
+    help_text = read_template_html(help_html_file)
+    for section in DEFAULT_HELP_SECTIONS:
+        content = re.findall(DIV_REGEX, extract_template_textblock(str(section)+".*"+str(section), help_text), flags=re.DOTALL)
+        new_content += content[0]
+
+    new_content = re.sub(FOLD_CHANGE, config['FOLD_CHANGE'], new_content)
+    new_content = re.sub(PVAL, config['PVAL'], new_content)
+
+
+    #place the new content into the output page:
+    pattern = get_search_pattern(OUTPUT_EXPLANATION)
+    template_html = re.sub(pattern, new_content, template_html, flags=re.DOTALL)
+    return template_html
+
+
 def extract_peak_analysis_metadata(peakfile):
 	
 	d={}
@@ -326,16 +354,17 @@ def create_html_table(data, cols):
 
 
 if __name__ == "__main__":
+	
+	try:
+		project_dir = os.environ['PROJECT_DIR']
 
-	project_dir = os.environ['PROJECT_DIR']
-
-	config={}
-	config['TEMPLATE_HTML_REPORT'] = os.environ['REPORT_TEMPLATE_HTML']
-	config['SAMPLES_FILE']= os.environ['VALID_SAMPLE_FILE'] #the two column file with chip and input samples
-	config['ANALYSIS_DIR_NAME']=os.environ['HOMER_DIR']
-	config['REPORT_DIR']=os.environ['REPORT_DIR']
-	config['PEAK_INFO_FILE']=os.environ['PEAKINFO_FILE']
-	config['QC_OUTPUT']=[
+		config={}
+		config['TEMPLATE_HTML_REPORT'] = os.environ['REPORT_TEMPLATE_HTML']
+		config['SAMPLES_FILE']= os.environ['VALID_SAMPLE_FILE'] #the two column file with chip and input samples
+		config['ANALYSIS_DIR_NAME']=os.environ['HOMER_DIR']
+		config['REPORT_DIR']=os.environ['REPORT_DIR']
+		config['PEAK_INFO_FILE']=os.environ['PEAKINFO_FILE']
+		config['QC_OUTPUT']=[
 			(os.environ['TAG_GC_CONTENT_FILE'],os.environ['TAG_GC_PLOT']),
 			(os.environ['TAG_AUTOCORRELATION_FILE'], os.environ['TAG_AUTOCORRELATION_PLOT']),
 			(os.environ['TAG_FREQ_FILE'],os.environ['TAG_FREQ_PLOT']),
@@ -343,29 +372,35 @@ if __name__ == "__main__":
 			(os.environ['TAG_COUNT_DISTRIBUTION_FILE'],os.environ['TAG_COUNT_DIST_PLOT']),
 			(os.environ['TAG_LENGTH_DISTRIBUTION_FILE'],os.environ['TAG_LENGTH_DIST_PLOT'])]
 
-	peakfile_prefix = os.environ['PEAKFILE_NAME']
-	peakfile_name = str(peakfile_prefix)+os.environ['PEAKFILE_EXT']
-	annotated_peakfile_name = str(peakfile_prefix)+os.environ['ANNOTATED_TAG']+os.environ['PEAKFILE_EXT']
-
-	config['PEAK_ANALYSIS_OUTPUT']=[os.environ['PEAKINFO_FILE'], peakfile_name, annotated_peakfile_name]
-	config['MOTIF_DIR_PREFIX']=os.environ['MOTIF_DIR_PREFIX']
-	config['MOTIF_ANALYSIS_OUTPUT']=[('Known motif enrichment', os.environ['KNOWN_RESULTS_HTML']), ('De Novo motif enrichment',os.environ['DENOVO_RESULTS_HTML'])]
-	config['GO_ANALYSIS_OUTPUT']=[('Genome ontology- based on peaks',os.environ['GENOME_ONTOLOGY_RESULTS_HTML']),
+		peakfile_prefix = os.environ['PEAKFILE_NAME']
+		peakfile_name = str(peakfile_prefix)+os.environ['PEAKFILE_EXT']
+		annotated_peakfile_name = str(peakfile_prefix)+os.environ['ANNOTATED_TAG']+os.environ['PEAKFILE_EXT']
+	
+		config['PEAK_ANALYSIS_OUTPUT']=[os.environ['PEAKINFO_FILE'], peakfile_name, annotated_peakfile_name]
+		config['MOTIF_DIR_PREFIX']=os.environ['MOTIF_DIR_PREFIX']
+		config['MOTIF_ANALYSIS_OUTPUT']=[('Known motif enrichment', os.environ['KNOWN_RESULTS_HTML']), ('De Novo motif enrichment',os.environ['DENOVO_RESULTS_HTML'])]
+		config['GO_ANALYSIS_OUTPUT']=[('Genome ontology- based on peaks',os.environ['GENOME_ONTOLOGY_RESULTS_HTML']),
 					('Gene ontology analysis of bound genes',os.environ['GENE_ONTOLOGY_RESULTS_HTML'])]
-	config['BED_FILE_SUFFIX']=os.environ['BED_FILE_SUFFIX']
-	config['DIFF_PEAKS_TAG']=os.environ['DIFF_PEAKS_TAG']
-
-	#get the chIP'd samples:
-	all_sample_ids = get_sample_ids(os.path.join(project_dir, config['SAMPLES_FILE']))
-
-	#fill in the template script:
-	html = read_template_html(config['TEMPLATE_HTML_REPORT'])
-	html = inject_qc_reports(html, all_sample_ids, config, project_dir)
-	html = inject_peak_reports(html, all_sample_ids, config, project_dir)
-	html = inject_motif_reports(html, all_sample_ids, config, project_dir)
-	html = inject_ontology_reports(html, all_sample_ids, config, project_dir)
-	html = inject_bedfile_links(html, all_sample_ids, config, project_dir)
-	html = inject_diff_peaks_links(html, all_sample_ids, config, project_dir)
-
-	write_completed_template(os.path.join(project_dir, config['REPORT_DIR'], os.environ['FINAL_RESULTS_REPORT']), html)
-
+		config['BED_FILE_SUFFIX']=os.environ['BED_FILE_SUFFIX']
+		config['DIFF_PEAKS_TAG']=os.environ['DIFF_PEAKS_TAG']
+		config['FOLD_CHANGE']=os.environ['FOLD_ENRICHMENT']
+		config['PVAL']=os.environ['PVAL']
+		help_html_file = os.environ['HELP_PAGE_CONTENT']
+	
+		#get the chIP'd samples:
+		all_sample_ids = get_sample_ids(os.path.join(project_dir, config['SAMPLES_FILE']))
+	
+		#fill in the template script:
+		html = read_template_html(config['TEMPLATE_HTML_REPORT'])
+		html = inject_qc_reports(html, all_sample_ids, config, project_dir)
+		html = inject_peak_reports(html, all_sample_ids, config, project_dir)
+		html = inject_motif_reports(html, all_sample_ids, config, project_dir)
+		html = inject_ontology_reports(html, all_sample_ids, config, project_dir)
+		html = inject_bedfile_links(html, all_sample_ids, config, project_dir)
+		html = inject_diff_peaks_links(html, all_sample_ids, config, project_dir)
+		html = inject_help_section(html, help_html_file, config)
+	
+		write_completed_template(os.path.join(project_dir, config['REPORT_DIR'], os.environ['FINAL_RESULTS_REPORT']), html)
+	
+	except KeyError:
+		sys.exit("An error occurred during the creation of the output report.")
