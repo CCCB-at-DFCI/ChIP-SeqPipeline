@@ -322,13 +322,21 @@ if [ $ALN -eq $NUM1 ]; then
 	SCRIPT=$PROJECT_DIR'/'$SAMPLE_DIR_PREFIX$SAMPLE'/'$SAMPLE$FORMATTED_ALIGN_SCRIPT_NAMETAG                
         #if we can fit another job
         if [ $num_tasks -lt $CONCURRENT_ALIGNMENT_PROCESSES ]; then
-                do_align $SCRIPT &
+		if [ $TEST -eq $NUM0 ]; then
+                	do_align $SCRIPT &
+		else
+			echo "Mock align for "$SCRIPT
+		fi
                 let num_tasks=num_tasks+1
 
 	#otherwise, wait for all the current processes to finish
         else
                 wait
-                do_align $SCRIPT &
+		if [ $TEST -eq $NUM0 ]; then
+	                do_align $SCRIPT &  #need this or the 'waiting sample' will be skipped
+		else
+			echo "Mock align for "$SCRIPT
+		fi
                 num_tasks=1
         fi
 
@@ -348,9 +356,15 @@ else
     while read line; do
         CHIP_SAMPLE=$(echo $line | awk '{print $1}')
         INPUT_SAMPLE=$(echo $line | awk '{print $2}')
-        CHIP_BAM_FILE=$( find -L $PROJECT_DIR -type f -name $CHIP_SAMPLE*bam )
-        INPUT_BAM_FILE=$( find -L $PROJECT_DIR -type f -name $INPUT_SAMPLE*bam )
 
+	#find all the bam files and sort by time modification (there may be multiple bam files for a particular sample)
+        ALL_CHIP_BAM_FILES=( $( find -L $PROJECT_DIR -type f -name $CHIP_SAMPLE*bam | xargs ls -t) ) #an array!
+        ALL_INPUT_BAM_FILES=( $( find -L $PROJECT_DIR -type f -name $INPUT_SAMPLE*bam | xargs ls -t) ) #an array!
+
+	#take the LAST modified BAM file:
+	CHIP_BAM_FILE=${ALL_CHIP_BAM_FILES[0]}
+	INPUT_BAM_FILE=${ALL_INPUT_BAM_FILES[0]}
+	
         if [ "$CHIP_BAM_FILE" != "" ] && [ "$INPUT_BAM_FILE" != "" ]; then
 	        CHIP_SAMPLE_ALN_DIR=$PROJECT_DIR'/'$SAMPLE_DIR_PREFIX$CHIP_SAMPLE'/'$ALN_DIR_NAME
 	        INPUT_SAMPLE_ALN_DIR=$PROJECT_DIR'/'$SAMPLE_DIR_PREFIX$INPUT_SAMPLE'/'$ALN_DIR_NAME
@@ -405,41 +419,44 @@ fi
 # HOMER analysis section:
 
 while read PAIRING; do
-	SAMPLENAME=$(echo $PAIRING | awk '{print $1}')
-        SAMPLENAME_INPUT=$(echo $PAIRING | awk '{print $2}')
+	if [ $TEST -eq $NUM0 ]; then
+		SAMPLENAME=$(echo $PAIRING | awk '{print $1}')
+	        SAMPLENAME_INPUT=$(echo $PAIRING | awk '{print $2}')
+	
+		BAMFILE=$PROJECT_DIR'/'$SAMPLE_DIR_PREFIX$SAMPLENAME'/'$ALN_DIR_NAME'/'$SAMPLENAME$BAM_EXTENSION
+		BAMFILE_INPUT=$PROJECT_DIR'/'$SAMPLE_DIR_PREFIX$SAMPLENAME_INPUT'/'$ALN_DIR_NAME'/'$SAMPLENAME_INPUT$BAM_EXTENSION
+	
+		SAMFILE=$(echo $BAMFILE | sed -e 's/\.bam/\.sam/')
+		SAMFILE_INPUT=$(echo $BAMFILE_INPUT | sed -e 's/\.bam/\.sam/')
+	
+		echo "Peak analysis for: $SAMPLENAME vs $SAMPLENAME_INPUT"
+	
+		echo "Making Tag Directory: $SAMPLENAME"
+		samtools view -h -o $SAMFILE $BAMFILE || { echo 'BAM to SAM fell over!' >&2; exit 1; }
+		makeTagDirectory $HOMER_DIR'/'$SAMPLENAME $SAMFILE > $HOMER_DIR'/'$SAMPLENAME.makeTagDirectory.log 2>&1 || { echo 'makeTagDirectory fell over' >&2; exit 1; }
 
-	BAMFILE=$PROJECT_DIR'/'$SAMPLE_DIR_PREFIX$SAMPLENAME'/'$ALN_DIR_NAME'/'$SAMPLENAME$BAM_EXTENSION
-	BAMFILE_INPUT=$PROJECT_DIR'/'$SAMPLE_DIR_PREFIX$SAMPLENAME_INPUT'/'$ALN_DIR_NAME'/'$SAMPLENAME_INPUT$BAM_EXTENSION
+		echo "Making Tag Directory: $SAMPLENAME_INPUT"
+		samtools view -h -o $SAMFILE_INPUT $BAMFILE_INPUT || { echo 'BAM to SAM fell over!' >&2; exit 1; }
+		makeTagDirectory $HOMER_DIR'/'$SAMPLENAME_INPUT $SAMFILE_INPUT > $HOMER_DIR'/'$SAMPLENAME_INPUT.makeTagDirectory.log 2>&1 || { echo 'makeTagDirectory fell over' >&2; exit 1; }
 
-	SAMFILE=$(echo $BAMFILE | sed -e 's/\.bam/\.sam/')
-	SAMFILE_INPUT=$(echo $BAMFILE_INPUT | sed -e 's/\.bam/\.sam/')
+		echo "Running ChIPseq Analysis"
+		analyzeChIP-Seq.pl $HOMER_DIR'/'$SAMPLENAME $ASSEMBLY -i $HOMER_DIR'/'$SAMPLENAME_INPUT \
+		    -B -style $PEAKMODE -o auto \
+		    -C -size $MOTIF_REGION_SIZE > $HOMER_DIR'/'$SAMPLENAME.analyzeChIP-Seq.log 2>&1 || { echo 'analyzeChIP-Seq fell over!' >&2; exit 1; }
 
-	echo "Peak analysis for: $SAMPLENAME vs $SAMPLENAME_INPUT"
+		echo "Updating Tag Directories"
+		makeTagDirectory $HOMER_DIR'/'$SAMPLENAME -update -genome $ASSEMBLY -checkGC > $HOMER_DIR'/'$SAMPLENAME.checkGC.log 2>&1 || { echo 'makeTagDirectory, checkGC fell over!' >&2; exit 1; }
+		makeUCSCfile $HOMER_DIR'/'$SAMPLENAME -o auto -i $HOMER_DIR'/'$SAMPLENAME_INPUT > $HOMER_DIR'/'$SAMPLENAME.makeUCSCfile.log 2>&1 || { echo 'makeUCSCfile fell over!' >&2; exit 1; }
 
-	echo "Making Tag Directory: $SAMPLENAME"
-	samtools view -h -o $SAMFILE $BAMFILE || { echo 'BAM to SAM fell over!' >&2; exit 1; }
-	makeTagDirectory $HOMER_DIR'/'$SAMPLENAME $SAMFILE > $HOMER_DIR'/'$SAMPLENAME.makeTagDirectory.log 2>&1 || { echo 'makeTagDirectory fell over' >&2; exit 1; }
-
-	echo "Making Tag Directory: $SAMPLENAME_INPUT"
-	samtools view -h -o $SAMFILE_INPUT $BAMFILE_INPUT || { echo 'BAM to SAM fell over!' >&2; exit 1; }
-	makeTagDirectory $HOMER_DIR'/'$SAMPLENAME_INPUT $SAMFILE_INPUT > $HOMER_DIR'/'$SAMPLENAME_INPUT.makeTagDirectory.log 2>&1 || { echo 'makeTagDirectory fell over' >&2; exit 1; }
-
-	echo "Running ChIPseq Analysis"
-	analyzeChIP-Seq.pl $HOMER_DIR'/'$SAMPLENAME $ASSEMBLY -i $HOMER_DIR'/'$SAMPLENAME_INPUT \
-	    -B -style $PEAKMODE -o auto \
-	    -C -size $MOTIF_REGION_SIZE > $HOMER_DIR'/'$SAMPLENAME.analyzeChIP-Seq.log 2>&1 || { echo 'analyzeChIP-Seq fell over!' >&2; exit 1; }
-
-	echo "Updating Tag Directories"
-	makeTagDirectory $HOMER_DIR'/'$SAMPLENAME -update -genome $ASSEMBLY -checkGC > $HOMER_DIR'/'$SAMPLENAME.checkGC.log 2>&1 || { echo 'makeTagDirectory, checkGC fell over!' >&2; exit 1; }
-	makeUCSCfile $HOMER_DIR'/'$SAMPLENAME -o auto -i $HOMER_DIR'/'$SAMPLENAME_INPUT > $HOMER_DIR'/'$SAMPLENAME.makeUCSCfile.log 2>&1 || { echo 'makeUCSCfile fell over!' >&2; exit 1; }
-
-	Rscript $PLOT_TAG_AUTOCORRELATION_SCRIPT $HOMER_DIR'/'$SAMPLENAME $TAG_AUTOCORRELATION_FILE $TAG_AUTOCORRELATION_PLOT || { echo $PLOT_TAG_AUTOCORRELATION_SCRIPT' fell over!' >&2; exit 1; }
-	Rscript $PLOT_TAG_COUNT_DIST_SCRIPT $HOMER_DIR'/'$SAMPLENAME $TAG_COUNT_DISTRIBUTION_FILE $TAG_COUNT_DIST_PLOT || { echo $PLOT_TAG_COUNT_DIST_SCRIPT' fell over!' >&2; exit 1; }
-	Rscript $PLOT_TAG_FREQ_SCRIPT $HOMER_DIR'/'$SAMPLENAME $TAG_FREQ_FILE $TAG_FREQ_PLOT || { echo $PLOT_TAG_FREQ_SCRIPT' fell over!' >&2; exit 1; }
-	Rscript $PLOT_TAG_FREQ_UNIQ_SCRIPT $HOMER_DIR'/'$SAMPLENAME $TAG_FREQ_UNIQ_FILE $TAG_FREQ_UNIQ_PLOT || { echo $PLOT_TAG_FREQ_UNIQ_SCRIPT' fell over!' >&2; exit 1; }
-	Rscript $PLOT_TAG_GC_SCRIPT $HOMER_DIR'/'$SAMPLENAME $TAG_GC_CONTENT_FILE $GENOME_GC_CONTENT_FILE $TAG_GC_PLOT || { echo $PLOT_TAG_GC_SCRIPT' fell over!' >&2; exit 1; }
-	Rscript $PLOT_TAG_LENGTH_DIST_SCRIPT $HOMER_DIR'/'$SAMPLENAME $TAG_LENGTH_DISTRIBUTION_FILE $TAG_LENGTH_DIST_PLOT || { echo $PLOT_TAG_LENGTH_DIST_SCRIPT' fell over!' >&2; exit 1; }
-
+		Rscript $PLOT_TAG_AUTOCORRELATION_SCRIPT $HOMER_DIR'/'$SAMPLENAME $TAG_AUTOCORRELATION_FILE $TAG_AUTOCORRELATION_PLOT || { echo $PLOT_TAG_AUTOCORRELATION_SCRIPT' fell over!' >&2; exit 1; }
+		Rscript $PLOT_TAG_COUNT_DIST_SCRIPT $HOMER_DIR'/'$SAMPLENAME $TAG_COUNT_DISTRIBUTION_FILE $TAG_COUNT_DIST_PLOT || { echo $PLOT_TAG_COUNT_DIST_SCRIPT' fell over!' >&2; exit 1; }
+		Rscript $PLOT_TAG_FREQ_SCRIPT $HOMER_DIR'/'$SAMPLENAME $TAG_FREQ_FILE $TAG_FREQ_PLOT || { echo $PLOT_TAG_FREQ_SCRIPT' fell over!' >&2; exit 1; }
+		Rscript $PLOT_TAG_FREQ_UNIQ_SCRIPT $HOMER_DIR'/'$SAMPLENAME $TAG_FREQ_UNIQ_FILE $TAG_FREQ_UNIQ_PLOT || { echo $PLOT_TAG_FREQ_UNIQ_SCRIPT' fell over!' >&2; exit 1; }
+		Rscript $PLOT_TAG_GC_SCRIPT $HOMER_DIR'/'$SAMPLENAME $TAG_GC_CONTENT_FILE $GENOME_GC_CONTENT_FILE $TAG_GC_PLOT || { echo $PLOT_TAG_GC_SCRIPT' fell over!' >&2; exit 1; }
+		Rscript $PLOT_TAG_LENGTH_DIST_SCRIPT $HOMER_DIR'/'$SAMPLENAME $TAG_LENGTH_DISTRIBUTION_FILE $TAG_LENGTH_DIST_PLOT || { echo $PLOT_TAG_LENGTH_DIST_SCRIPT' fell over!' >&2; exit 1; }
+	else
+		echo "Mock HOMER analysis for pairing: "$PAIRING
+	fi
 done < $VALID_SAMPLE_FILE
 
 ############################################################################
@@ -491,7 +508,11 @@ while read CONTRAST; do
         SAMPLE_B=$(echo $CONTRAST | awk '{print $2}')
 	SAMPLE_A_PEAK_DIR=$HOMER_DIR'/'$SAMPLE_A
 	SAMPLE_B_PEAK_DIR=$HOMER_DIR'/'$SAMPLE_B
-	run_diff_peaks $SAMPLE_A_PEAK_DIR'/'$PEAKFILE_NAME $SAMPLE_A_PEAK_DIR $SAMPLE_B_PEAK_DIR $HOMER_DIR'/'$DIFF_PEAKS_DIR &
+	if [ $TEST -eq $NUM0 ]; then
+		run_diff_peaks $SAMPLE_A_PEAK_DIR'/'$PEAKFILE_NAME $SAMPLE_A_PEAK_DIR $SAMPLE_B_PEAK_DIR $HOMER_DIR'/'$DIFF_PEAKS_DIR &
+	else
+		echo "Mock differential peak analysis between $SAMPLE_A and $SAMPLE_B"
+	fi
 done < $CONTRAST_FILE
 
 #wait for all these processes to finish before moving on:
