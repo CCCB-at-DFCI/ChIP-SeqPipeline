@@ -74,6 +74,10 @@ DENOVO_RESULTS_HTML='homerResults.html'
 GENOME_ONTOLOGY_RESULTS_HTML='GenomeOntology.html'
 GENE_ONTOLOGY_RESULTS_HTML='geneOntology.html'
 
+#directory names for the GO analyses
+# used in correcting a bug in the output motif html created by homer:
+GO_ANALYSIS_DIR=GOanalysis
+
 #file suffix for the BED files created by homer:
 BED_FILE_SUFFIX='ucsc.bedGraph.gz'
 

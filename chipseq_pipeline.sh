@@ -533,9 +533,21 @@ else
 fi
 ############################################################
 
+# Fix broken links created by HOMER's default reports:
+# links going from motif to GO pages are broken
+# in the known motif
+for file in $( find $HOMER_DIR -type f -name $KNOWN_RESULTS_HTML ); do
+	sed -i "s:$GENE_ONTOLOGY_RESULTS_HTML:../$GO_ANALYSIS_DIR/$GENE_ONTOLOGY_RESULTS_HTML:g" $file	
+done
+
+for file in $( find $HOMER_DIR -type f -name $DENOVO_RESULTS_HTML ); do
+	sed -i "s:$GENE_ONTOLOGY_RESULTS_HTML:../$GO_ANALYSIS_DIR/$GENE_ONTOLOGY_RESULTS_HTML:g" $file	
+done
+
+
 
 ############################################################
 #cleanup
-#rm $VALID_SAMPLE_LIST
+rm $VALID_SAMPLE_LIST
 
 
