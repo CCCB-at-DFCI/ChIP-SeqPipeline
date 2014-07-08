@@ -1,7 +1,7 @@
 #Defining the location of the pipeline and some related scripts
 
 #the 'home' directory for the ChIP-seq pipeline:
-PIPELINE_HOME=/cccbstore-rc/projects/cccb/pipelines/ChIP_Seq_pipeline
+PIPELINE_HOME=/cccbstore-rc/projects/cccb/pipelines/ChIP-SeqPipeline
 
 #a directory containing the template files+libraries for creating the output report. will be filled-in by scripts at end of pipeline
 REPORT_TEMPLATE_DIR=$PIPELINE_HOME/report_generator
