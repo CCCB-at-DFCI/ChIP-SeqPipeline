@@ -187,7 +187,7 @@ fi
 
 #if no configuration file was given, then use teh default one
 if [ "$CONFIG" == "" ]; then
-    CONFIG=/cccbstore-rc/projects/cccb/pipelines/ChIP_Seq_pipeline/config.txt
+    CONFIG=/cccbstore-rc/projects/cccb/pipelines/ChIP-SeqPipeline/config.txt
     echo ""
     echo "Using the default configuration file located at: "$CONFIG
 fi
