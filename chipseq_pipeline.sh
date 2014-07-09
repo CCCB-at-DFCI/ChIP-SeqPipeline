@@ -295,7 +295,7 @@ function do_align
 	date
 	echo ""
         chmod a+x $1
-	$1
+	$1 || { echo "There was an error in the alignment process.  Exiting."; exit 1; }
 	echo "Completed alignment at: "
 	date
 }
