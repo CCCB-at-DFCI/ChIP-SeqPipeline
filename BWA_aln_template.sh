@@ -67,7 +67,7 @@ elif [ $PAIRED -eq $NUM1 ]; then
     bwa aln -t 6 $BWAIDX $FASTQFILEB >$TMPDIR/s1_2.sai
     bwa sampe $BWAIDX $TMPDIR/s1_1.sai $TMPDIR/s1_2.sai $FASTQFILEA $FASTQFILEB | samtools view -Shb - >$TMPDIR/aln.bam
 else
-     echo ERROR. No pairing option specified.
+     echo "ERROR. No pairing option specified."
 fi
 
 #post-alignment sorting, indexing:

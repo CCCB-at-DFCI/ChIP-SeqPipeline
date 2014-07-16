@@ -27,7 +27,7 @@ PLOT_TAG_LENGTH_DIST_SCRIPT=$PIPELINE_HOME"/plot_tagLengthDistribution.R"
 
 
 #directory for picard tools jars:
-PICARD_LOCATION=/cccbstore-rc/projects/cccb/apps/picard-tools-current
+PICARD_LOCATION=/cccbstore-rc/projects/cccb/apps/picard-tools_current
 #####################################################################################
 # definitions related to the BWA aligner:
 
