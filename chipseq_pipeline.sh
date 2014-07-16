@@ -473,8 +473,8 @@ done < $VALID_SAMPLE_FILE
 
 function run_diff_peaks
 {
-	echo getDifferentialPeaks $1 $2 $3 -F $FOLD_ENRICHMENT -P $PVAL > $4'/'$(basename $2)'_vs_'$(basename $3)'.tsv' 2> $4'/'$(basename $2)'_vs_'$(basename $3)'.log'
-	echo getDifferentialPeaks $1 $2 $3 -rev -F $FOLD_ENRICHMENT -P $PVAL > $4'/'$(basename $2)'_vs_'$(basename $3)'.tsv' 2> $4'/'$(basename $2)'_vs_'$(basename $3)'.log'
+	echo "getDifferentialPeaks $1 $2 $3 -F $FOLD_ENRICHMENT -P $PVAL > $4'/'$(basename $2)'_vs_'$(basename $3)'.tsv' 2> $4'/'$(basename $2)'_vs_'$(basename $3)'.log'"
+	echo "getDifferentialPeaks $1 $2 $3 -rev -F $FOLD_ENRICHMENT -P $PVAL > $4'/'$(basename $2)'_vs_'$(basename $3)'.tsv' 2> $4'/'$(basename $2)'_vs_'$(basename $3)'.log'"
 	getDifferentialPeaks $1 $2 $3 -F $FOLD_ENRICHMENT -P $PVAL > $4'/'$(basename $2)'_vs_'$(basename $3)$DIFF_PEAKS_TAG'.tsv' 2> $4'/'$(basename $2)'_vs_'$(basename $3)'.log'
 	getDifferentialPeaks $1 $2 $3 -rev -F $FOLD_ENRICHMENT -P $PVAL > $4'/'$(basename $3)'_vs_'$(basename $2)$DIFF_PEAKS_TAG'.tsv' 2> $4'/'$(basename $3)'_vs_'$(basename $2)'.log'
 }
@@ -509,7 +509,7 @@ while read CONTRAST; do
 	SAMPLE_A_PEAK_DIR=$HOMER_DIR'/'$SAMPLE_A
 	SAMPLE_B_PEAK_DIR=$HOMER_DIR'/'$SAMPLE_B
 	if [ $TEST -eq $NUM0 ]; then
-		run_diff_peaks $SAMPLE_A_PEAK_DIR'/'$PEAKFILE_NAME $SAMPLE_A_PEAK_DIR $SAMPLE_B_PEAK_DIR $HOMER_DIR'/'$DIFF_PEAKS_DIR &
+		run_diff_peaks $SAMPLE_A_PEAK_DIR'/'$PEAKFILE_NAME$TXT_EXT $SAMPLE_A_PEAK_DIR $SAMPLE_B_PEAK_DIR $HOMER_DIR'/'$DIFF_PEAKS_DIR &
 	else
 		echo "Mock differential peak analysis between $SAMPLE_A and $SAMPLE_B"
 	fi
