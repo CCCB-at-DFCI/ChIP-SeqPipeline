@@ -233,7 +233,9 @@ export PEAKFILE_NAME
 
 
 #remove any 'valid sample list' files that may exist:
-rm $VALID_SAMPLE_LIST
+if [ -e $VALID_SAMPLE_LIST ]; then
+	rm $VALID_SAMPLE_LIST
+fi
 #############################################################
 
 #identify the correct genome files to use
