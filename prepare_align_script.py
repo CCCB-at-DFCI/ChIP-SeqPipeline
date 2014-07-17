@@ -42,8 +42,6 @@ class Sample:
         self.sample_dir = ""
         self.fastq_a = ""
         self.fastq_b = ""
-        self.sequencing_info_dict = None
-
 
 def read_samples(samples_file):
     """
@@ -101,16 +99,6 @@ def find(pattern):
         return None
 
 
-def parse_seq_info(samplesheet):
-    try:
-        with open(samplesheet, 'r') as f:
-            keys = f.readline().strip().split(',')
-            values = f.readline().strip().split(',')
-            return dict(zip(keys, values))
-    except IOError:
-        sys.exit("Could not locate the sample sheet at: "+str(samplesheet))
-
-
 def prepare_sample(sample):
     """
     Receives a Sample object-- prepares things like the paths, etc. based on the project metadata
@@ -123,10 +111,6 @@ def prepare_sample(sample):
     search_pattern = os.path.join(sample.sample_dir, sample.sample_name)
     sample.fastq_a = find(search_pattern+"*R1*fastq.gz")
     sample.fastq_b = find(search_pattern+"*R2*fastq.gz")
-
-    #extract sample metadata (for read group info) from the samplesheet:
-    
-    sample.sequencing_info_dict = parse_seq_info(os.path.join(sample.sample_dir, sample.sample_metadata.samplesheet))
 
     return sample
 
