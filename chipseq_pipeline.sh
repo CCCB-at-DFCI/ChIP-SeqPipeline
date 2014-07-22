@@ -259,6 +259,10 @@ export GTF
 #############################################################
 
 
+#check for R dependencies before continuing:
+Rscript $R_DEPENDENCY_CHECK_SCRIPT || { echo "The proper R dependencies were not installed or could not be installed.  Exiting."; exit 1; }
+
+
 ############################################################
 
 #print out the parameters for logging:
@@ -442,14 +446,13 @@ while read PAIRING; do
 		makeTagDirectory $HOMER_DIR'/'$SAMPLENAME_INPUT $SAMFILE_INPUT > $HOMER_DIR'/'$SAMPLENAME_INPUT.makeTagDirectory.log 2>&1 || { echo 'makeTagDirectory fell over' >&2; exit 1; }
 
 		echo "Running ChIPseq Analysis"
-		analyzeChIP-Seq.pl $HOMER_DIR'/'$SAMPLENAME $ASSEMBLY -i $HOMER_DIR'/'$SAMPLENAME_INPUT \
-		    -B -style $PEAKMODE -o auto \
-		    -C -size $MOTIF_REGION_SIZE > $HOMER_DIR'/'$SAMPLENAME.analyzeChIP-Seq.log 2>&1 || { echo 'analyzeChIP-Seq fell over!' >&2; exit 1; }
+		analyzeChIP-Seq.pl $HOMER_DIR'/'$SAMPLENAME $ASSEMBLY -i $HOMER_DIR'/'$SAMPLENAME_INPUT -B -style $PEAKMODE -o auto -C -size $MOTIF_REGION_SIZE > $HOMER_DIR'/'$SAMPLENAME.analyzeChIP-Seq.log 2>&1 || { echo 'analyzeChIP-Seq fell over!' >&2; exit 1; }
 
 		echo "Updating Tag Directories"
 		makeTagDirectory $HOMER_DIR'/'$SAMPLENAME -update -genome $ASSEMBLY -checkGC > $HOMER_DIR'/'$SAMPLENAME.checkGC.log 2>&1 || { echo 'makeTagDirectory, checkGC fell over!' >&2; exit 1; }
 		makeUCSCfile $HOMER_DIR'/'$SAMPLENAME -o auto -i $HOMER_DIR'/'$SAMPLENAME_INPUT > $HOMER_DIR'/'$SAMPLENAME.makeUCSCfile.log 2>&1 || { echo 'makeUCSCfile fell over!' >&2; exit 1; }
 
+		echo "Creating plots"
 		Rscript $PLOT_TAG_AUTOCORRELATION_SCRIPT $HOMER_DIR'/'$SAMPLENAME $TAG_AUTOCORRELATION_FILE $TAG_AUTOCORRELATION_PLOT || { echo $PLOT_TAG_AUTOCORRELATION_SCRIPT' fell over!' >&2; exit 1; }
 		Rscript $PLOT_TAG_COUNT_DIST_SCRIPT $HOMER_DIR'/'$SAMPLENAME $TAG_COUNT_DISTRIBUTION_FILE $TAG_COUNT_DIST_PLOT || { echo $PLOT_TAG_COUNT_DIST_SCRIPT' fell over!' >&2; exit 1; }
 		Rscript $PLOT_TAG_FREQ_SCRIPT $HOMER_DIR'/'$SAMPLENAME $TAG_FREQ_FILE $TAG_FREQ_PLOT || { echo $PLOT_TAG_FREQ_SCRIPT' fell over!' >&2; exit 1; }
