@@ -7,6 +7,9 @@
 
 echo "Checking dependencies..."
 
+echo "Adding default perl to path..."
+export PATH=/usr/bin/perl:$PATH
+
 #check for java
 if ! which java ; then
 	echo "Could not find java in current directory or in PATH"
@@ -438,11 +441,15 @@ while read PAIRING; do
 		echo "Peak analysis for: $SAMPLENAME vs $SAMPLENAME_INPUT"
 	
 		echo "Making Tag Directory: $SAMPLENAME"
-		samtools view -h -o $SAMFILE $BAMFILE || { echo 'BAM to SAM fell over!' >&2; exit 1; }
+		if [ ! -e $SAMFILE ]; then
+			samtools view -h -o $SAMFILE $BAMFILE || { echo 'BAM to SAM fell over!' >&2; exit 1; }
+		fi
 		makeTagDirectory $HOMER_DIR'/'$SAMPLENAME $SAMFILE > $HOMER_DIR'/'$SAMPLENAME.makeTagDirectory.log 2>&1 || { echo 'makeTagDirectory fell over' >&2; exit 1; }
 
 		echo "Making Tag Directory: $SAMPLENAME_INPUT"
-		samtools view -h -o $SAMFILE_INPUT $BAMFILE_INPUT || { echo 'BAM to SAM fell over!' >&2; exit 1; }
+		if [ ! -e $SAMFILE_INPUT ]; then
+			samtools view -h -o $SAMFILE_INPUT $BAMFILE_INPUT || { echo 'BAM to SAM fell over!' >&2; exit 1; }
+		fi
 		makeTagDirectory $HOMER_DIR'/'$SAMPLENAME_INPUT $SAMFILE_INPUT > $HOMER_DIR'/'$SAMPLENAME_INPUT.makeTagDirectory.log 2>&1 || { echo 'makeTagDirectory fell over' >&2; exit 1; }
 
 		echo "Running ChIPseq Analysis"
