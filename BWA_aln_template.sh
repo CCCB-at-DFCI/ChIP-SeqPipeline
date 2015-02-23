@@ -87,10 +87,11 @@ rm $TMPDIR/aln.bam
 # make a new bam file with only primary alignments  (if BAM is paired end, you may still have singletons here..so no filtering for proper pairs)
 FILTERED_FILE=$OUTDIR'/'$SAMPLE_NAME.primary.bam
 samtools view -b -F 0x0100 $DEDUP_BAM > $FILTERED_FILE
-samtools index $FILTERED_FILE
 
 #rename with suffix for easier finding
-mv $FILTERED_FILE $OUTDIR'/'$SAMPLE_NAME$BAM_FILE_SUFFIX
+FINAL_BAM=$OUTDIR'/'$SAMPLE_NAME$BAM_FILE_SUFFIX
+mv $FILTERED_FILE $FINAL_BAM
+samtools index $FINAL_BAM
 
 chmod 744 $OUTDIR
 chmod -R a+rx $OUTDIR

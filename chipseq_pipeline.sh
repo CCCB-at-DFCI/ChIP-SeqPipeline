@@ -49,10 +49,12 @@ function usage
 		-g | --genome <genome_id> (hg19, mm10) (required)
 		-c | --contrasts <path_to_contrast_file> (optional) 
 		-config <path_to_custom_configuration_file> (optional)
+		-target <string> (optional. The ending/extension of the BAM files you want to use for the chipseq analysis if not aligning. )
 		-peakMode <mode> (optional, default is 'factor' for TFBS.  set to 'histone' for histone marks)
                 -noalign (optional, default behavior is to align.  If this option is set, need properly named BAM files) 
                 -paired (optional, default= single-end) 
-		-test (optional, for simple test)"
+		-test (optional, for simple test)
+		-align_only (optional, if you only want to align the samples listed in the sample file.  Skips ChIP-Seq analysis.)"
 	echo "**************************************************************************************************"
 }
 
@@ -126,6 +128,10 @@ while [ "$1" != "" ]; do
 		-noalign )
 			ALN=0
 			;;
+                -target )
+                        shift
+                        TARGET_BAM=$1
+                        ;;
 		-paired )
 			PAIRED_READS=1
 			;;
@@ -135,6 +141,9 @@ while [ "$1" != "" ]; do
 			;;
 		-test )
 			TEST=1
+			;;
+		-align_only )
+			SKIP_ANALYSIS=1
 			;;
 		* )
 			usage
@@ -186,6 +195,16 @@ fi
 #if TEST was not set, then do NOT test
 if [ "$TEST" == "" ]; then
     TEST=0
+fi
+
+# if TARGET_BAM was not set via the commandline arg, set it to the default BAM extension
+if [ "$TARGET_BAM" == "" ]; then
+    TARGET_BAM=$BAM_EXTENSION       
+fi
+
+#if SKIP_ANALYSIS was not set, then we DO want to perform analysis, so set the flag to zero
+if [ "$SKIP_ANALYSIS" == "" ]; then
+    SKIP_ANALYSIS=0
 fi
 
 #if no configuration file was given, then use teh default one
@@ -367,8 +386,8 @@ else
         INPUT_SAMPLE=$(echo $line | awk '{print $2}')
 
 	#find all the bam files and sort by time modification (there may be multiple bam files for a particular sample)
-        ALL_CHIP_BAM_FILES=( $( find -L $PROJECT_DIR -type f -name $CHIP_SAMPLE*bam | xargs ls -t) ) #an array!
-        ALL_INPUT_BAM_FILES=( $( find -L $PROJECT_DIR -type f -name $INPUT_SAMPLE*bam | xargs ls -t) ) #an array!
+        ALL_CHIP_BAM_FILES=( $( find -L $PROJECT_DIR -type f -name $CHIP_SAMPLE*$TARGET_BAM | xargs ls -t) ) #an array!
+        ALL_INPUT_BAM_FILES=( $( find -L $PROJECT_DIR -type f -name $INPUT_SAMPLE*$TARGET_BAM | xargs ls -t) ) #an array!
 
 	#take the LAST modified BAM file:
 	CHIP_BAM_FILE=${ALL_CHIP_BAM_FILES[0]}
@@ -390,6 +409,18 @@ else
     echo "Found BAM files for the following samples:"
     cat $VALID_SAMPLE_LIST
     
+fi
+
+############################################################
+
+
+
+############################################################
+
+# if the SKIP_ANALYSIS flag has been set to 1, then exit here
+if [ $SKIP_ANALYSIS -eq $NUM1 ]; then
+        echo "Alignments complete.  Skipping analysis since the -align_only flag has been set"
+        exit 0
 fi
 
 ############################################################
